@@ -1,8 +1,9 @@
 from flask import Flask, render_template, make_response, request, jsonify
 from flask import abort, redirect, url_for
-import os
+import os, json
 import werkzeug
 from datetime import datetime
+import subprocess
 
 import urllib
 
@@ -11,14 +12,66 @@ app = Flask(__name__)
 # Authorization Blockchain API
 
 
-def make_input():
+def make_input(cc_name, func_name, args):
     # BCに投げる用の入力を生成する関数
-    return None
+    """
+    :param cc_name string: Chaincode の名前
+    :param func_name string: function の名前
+    :param args list: 引数のリスト
+    """
+    PEER_PATH = "/home/ubuntu/project-bcauth/fabric-samples/bin/"
+    PWD = "/home/ubuntu/project-bcauth/fabric-samples/test-network"
+    cd = "cd {}; ".format(PWD)
+    export_PATH = "export PATH={}/../bin:$PATH; ".format(PWD)
+    export_CFG = "export FABRIC_CFG_PATH={}/../config/; ".format(PWD)
+    export_CORE = "export CORE_PEER_TLS_ENABLED=true; export CORE_PEER_LOCALMSPID='Org1MSP'; export CORE_PEER_TLS_ROOTCERT_FILE={}/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt; export CORE_PEER_MSPCONFIGPATH={}/organizations/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp;export CORE_PEER_ADDRESS=localhost:7051;".format(PWD, PWD)
+
+    ret = cd + export_PATH + export_CFG + export_CORE + 'peer chaincode invoke -o localhost:7050 --ordererTLSHostnameOverride orderer.example.com --tls --cafile {0}/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem -C mychannel -n {1} --peerAddresses localhost:7051 --tlsRootCertFiles {2}/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt --peerAddresses localhost:9051 --tlsRootCertFiles {3}/organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt -c \'{{"function":"{4}","Args":{5}}}\''.format(
+        PWD, cc_name, PWD, PWD, func_name, str(args).replace("'", '"'))
+    #ret = cd + export_PATH + export_CFG + "ls $FABRIC_CFG_PATH"
+    return ret
 
 
-def interpret_command_output():
+def terminal_interface(cmd):
+    
+    """
+    :param cmd: str 実行するコマンド
+    """
+    proc = subprocess.Popen(
+        cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
+    while True:
+        line = proc.stdout.readline()
+        if line:
+            yield line
+        if not line and proc.poll() is not None:
+            break
+
+    return line
+
+def input_command(cmd):
+    # BC にコマンドを投げる関数
+    # 注：subprocess.check_output ではなぜか標準出力が取得できなかったので，
+    # 以下の方法を試したらうまくいった．
+    _output = []  # 標準出力を格納
+    for line in terminal_interface(cmd):
+        _output.append(line)
+    return _output
+
+
+def interpret_command_output(_output):
     # BCから受け取った出力を解釈する関数
-    return None
+    try:
+        # ...status:200 payload:"any_response" \n']
+        # -> [200, payload:"any_response", \n']]
+        li = str(_output[0]).split('status:')[-1].split(' ')
+        if li[0] == '200':
+            output = li[1].replace('payload:', '').replace('\"', '')
+        else:
+            output = _output[0]
+        return output
+    except:
+        return "Error: exception."
 
 
 @app.route('/')
@@ -43,16 +96,25 @@ def pat_post():
     uid = request.form['uid']
     roId = request.form['roId']
     rsId = request.form['rsId']
+    timestamp = "1595230979"
+    timeSig = "vF9Oyfm+G9qS4/Qfns5MgSZNYjOPlAIZVECh2I5Z7HHgdloy5q7gJoxi7c1S2/ebIQbEMLS05x3+b0WD0VJfcWSUwZMHr3jfXYYwbeZ1TerKpvfp1j21nZ+OEP26bc28rLRAYZsVQ4Ilx7qp+uLfxu9X9x37Qj3n0CI2TEiKYSSYDQ0bftQ/3iWSSoGjsDljh9bKz1eVL911KeUGO+t/9IkB6LtZghdbIlnGISbgrVGoEOtGHi0t8uD2Vh/CRyBe+XnQV3HQtkjddLQitAesKTYunK1Ctia3x7klVjRH9XiJ11q6IbR8gz7rchdHYZe6HP+w/LyWMS5z6M26AXQrVw=="
 
-    input = make_input(roId, rsId)
-    _output = command(input)
+    input = make_input("pat", "invoke", [roId, rsId, timestamp, timeSig])
+    # print(input)
+    """
+    try:
+        _output = subprocess.check_output(input)
+    except:
+        print("Error: pat_post().")
+        """
+    _output = input_command(input)    
     output = interpret_command_output(_output)
+    print(output)
     param = {'uid': uid, 'pat': output}
-    #param = {'q': roId + " " + rsId}
     qs = urllib.parse.urlencode(param)
 
+    # return make_response(jsonify({"message": qs}))
     return redirect('http://eza1.ctiport.net:8080/reg-resource?' + qs, code=301)
-    # return redirect('https://www.google.com/search?' + qs, code=301)
 
 
 @app.route('/rreg')
@@ -114,13 +176,39 @@ def rreg_create():
 
     # body を読み取る
     body = request.get_data()
-    resource_description = body.resource_description
-    input = make_input(pat, resource_description)
-    _output = command(input)
-    output = interpret_command_output(_output)
-    res = {'resource_id': output.resourceId}
+    # バイト列を文字列に変換
+    body = body.decode('utf8').replace("'", '"')
+    # 文字列をJSONに変換
+    body = json.loads(body)
 
-    return jsonify({'res': res})
+    resource_description = body['resource_description']
+    print("resource_description: ", resource_description)
+    resource_scopes = ""
+    for i, e in enumerate(resource_description['resource_scopes']):
+        resource_scopes = resource_scopes + e
+        if i is not len(resource_description['resource_scopes'])-1:
+            resource_scopes = resource_scopes + ", "
+    description = resource_description['description']
+    icon_uri = resource_description['icon_uri']
+    name = resource_description['name']
+    _type = resource_description['type']
+    timestamp = "1595230979"
+    timeSig = "vF9Oyfm+G9qS4/Qfns5MgSZNYjOPlAIZVECh2I5Z7HHgdloy5q7gJoxi7c1S2/ebIQbEMLS05x3+b0WD0VJfcWSUwZMHr3jfXYYwbeZ1TerKpvfp1j21nZ+OEP26bc28rLRAYZsVQ4Ilx7qp+uLfxu9X9x37Qj3n0CI2TEiKYSSYDQ0bftQ/3iWSSoGjsDljh9bKz1eVL911KeUGO+t/9IkB6LtZghdbIlnGISbgrVGoEOtGHi0t8uD2Vh/CRyBe+XnQV3HQtkjddLQitAesKTYunK1Ctia3x7klVjRH9XiJ11q6IbR8gz7rchdHYZe6HP+w/LyWMS5z6M26AXQrVw=="
+
+    cc_name = "rreg"
+    func_name = "invoke"
+    #args = "[\"" + pat + "\", \"" + resource_description.replace("'", '"').replace('"', '\\"') + "\"]"
+    args = [pat, resource_scopes, description, icon_uri, name, _type, timestamp, timeSig]
+    #print("args: ", args)
+
+    input = make_input(cc_name, func_name, args)
+    #print("input: ", input)
+    _output = input_command(input)
+    output = interpret_command_output(_output)
+    print("output: ", output)
+    res = {'resource_id': output}
+
+    return make_response(json.dumps({'response': res}), 200)
     # return render_template('rreg.html')
 
 
