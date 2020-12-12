@@ -188,6 +188,7 @@ peer lifecycle chaincode commit -o localhost:7050 --ordererTLSHostnameOverride o
 # queryinstalled
 peer lifecycle chaincode querycommitted --channelID mychannel --name intro --cafile ${PWD}/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem;
 
+# ***** デバッグ用 **************************************************
 # invoke（連続して実行するとエラー発生するので，時間をおいて実行する）
 # timestamp
 export INVOKE_CC_NAME="timestamp";

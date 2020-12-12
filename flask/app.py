@@ -1,5 +1,6 @@
 from flask import Flask, render_template, make_response, request, jsonify
 from flask import abort, redirect, url_for
+from jinja2 import Template
 import os, json
 import werkzeug
 from datetime import datetime
@@ -63,12 +64,12 @@ def interpret_command_output(_output):
     # BCから受け取った出力を解釈する関数
     try:
         # ...status:200 payload:"any_response" \n']
-        # -> [200, payload:"any_response", \n']]
+        # -> [200, payload:"any_response", \n']
         li = str(_output[0]).split('status:')[-1].split(' ')
         if li[0] == '200':
             output = li[1].replace('payload:', '').replace('\"', '')
         else:
-            output = _output[0]
+            output = _output[0].decode('utf8').replace("'", '"')
         return output
     except:
         return "Error: exception."
@@ -219,7 +220,7 @@ def policy():
         resource = request.args.get('resource')
         rid = request.args.get('rid')
     else:
-        return jsonify({'message': "error: no resource or resource id"})
+        return jsonify({'message': "error: no resource name or resource id"})
 
     html = """
     <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 
@@ -239,7 +240,7 @@ def policy():
             <p>Issuer:   <input type="text" name="iss"></p>
             <p>Subject:  <input type="text" name="sub"></p>
             <p>Audience: <input type="text" name="aud"></p>
-            <input type="hidden" name="rid" value={1}">
+            <input type="hidden" name="rid" value={1}>
             <button type="submit" value="set-policy">set policy</button>
         </form>
     </body>
@@ -247,23 +248,33 @@ def policy():
     </html>
     """.format(resource, rid)
 
-    return render_template('policy.html')
+    template = Template(html)
+
+    return template.render()
 
 
 @app.route('/policy', methods=['post'])
 def policy_post():
     # ポリシーの設定を実行する
     rid = request.form['rid']
-    iss = request.form['iss']
-    sub = request.form['sub']
-    aud = request.form['aud']
+    print("rid: ", rid)
+    iss = request.form['iss']  # クレームトークンの発行主
+    sub = request.form['sub']  # クレームトークンの発行先（被検証者）
+    aud = request.form['aud']  # クレームトークンの検証者
     if iss == "" or sub == "" or aud == "":
         return jsonify({'message': "error: iss or sub or aud is not configured"})
-
-    input = make_input(rid, iss, sub, aud)
-    _output = command(input)
+    
+    cc_name = "policy"
+    func_name = "invoke"
+    args = [rid, iss, sub, aud]
+    #print("args: ", args)
+    input = make_input(cc_name, func_name, args)
+    #print("input: ", input)
+    _output = input_command(input)
     output = interpret_command_output(_output)
-    return jsonify({'message': "successfully configured."})
+    print("output: ", output)
+
+    return jsonify({'message': output})
 
 
 @app.route('/perm')
