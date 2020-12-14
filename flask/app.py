@@ -1,7 +1,8 @@
 from flask import Flask, render_template, make_response, request, jsonify
 from flask import abort, redirect, url_for
 from jinja2 import Template
-import os, json
+import os
+import json
 import werkzeug
 from datetime import datetime
 import subprocess
@@ -25,7 +26,8 @@ def make_input(cc_name, func_name, args):
     cd = "cd {}; ".format(PWD)
     export_PATH = "export PATH={}/../bin:$PATH; ".format(PWD)
     export_CFG = "export FABRIC_CFG_PATH={}/../config/; ".format(PWD)
-    export_CORE = "export CORE_PEER_TLS_ENABLED=true; export CORE_PEER_LOCALMSPID='Org1MSP'; export CORE_PEER_TLS_ROOTCERT_FILE={}/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt; export CORE_PEER_MSPCONFIGPATH={}/organizations/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp;export CORE_PEER_ADDRESS=localhost:7051;".format(PWD, PWD)
+    export_CORE = "export CORE_PEER_TLS_ENABLED=true; export CORE_PEER_LOCALMSPID='Org1MSP'; export CORE_PEER_TLS_ROOTCERT_FILE={}/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt; export CORE_PEER_MSPCONFIGPATH={}/organizations/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp;export CORE_PEER_ADDRESS=localhost:7051;".format(
+        PWD, PWD)
 
     ret = cd + export_PATH + export_CFG + export_CORE + 'peer chaincode invoke -o localhost:7050 --ordererTLSHostnameOverride orderer.example.com --tls --cafile {0}/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem -C mychannel -n {1} --peerAddresses localhost:7051 --tlsRootCertFiles {2}/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt --peerAddresses localhost:9051 --tlsRootCertFiles {3}/organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt -c \'{{"function":"{4}","Args":{5}}}\''.format(
         PWD, cc_name, PWD, PWD, func_name, str(args).replace("'", '"'))
@@ -34,7 +36,6 @@ def make_input(cc_name, func_name, args):
 
 
 def terminal_interface(cmd):
-    
     """
     :param cmd: str 実行するコマンド
     """
@@ -49,6 +50,7 @@ def terminal_interface(cmd):
             break
 
     return line
+
 
 def input_command(cmd):
     # BC にコマンドを投げる関数
@@ -97,8 +99,8 @@ def pat_post():
     uid = request.form['uid']
     roId = request.form['roId']
     rsId = request.form['rsId']
-    timestamp = "1595230979"
-    timeSig = "vF9Oyfm+G9qS4/Qfns5MgSZNYjOPlAIZVECh2I5Z7HHgdloy5q7gJoxi7c1S2/ebIQbEMLS05x3+b0WD0VJfcWSUwZMHr3jfXYYwbeZ1TerKpvfp1j21nZ+OEP26bc28rLRAYZsVQ4Ilx7qp+uLfxu9X9x37Qj3n0CI2TEiKYSSYDQ0bftQ/3iWSSoGjsDljh9bKz1eVL911KeUGO+t/9IkB6LtZghdbIlnGISbgrVGoEOtGHi0t8uD2Vh/CRyBe+XnQV3HQtkjddLQitAesKTYunK1Ctia3x7klVjRH9XiJ11q6IbR8gz7rchdHYZe6HP+w/LyWMS5z6M26AXQrVw=="
+    timestamp = request.form['timestamp']
+    timeSig = request.form['timeSig']
 
     input = make_input("pat", "invoke", [roId, rsId, timestamp, timeSig])
     # print(input)
@@ -108,7 +110,7 @@ def pat_post():
     except:
         print("Error: pat_post().")
         """
-    _output = input_command(input)    
+    _output = input_command(input)
     output = interpret_command_output(_output)
     print(output)
     param = {'uid': uid, 'pat': output}
@@ -184,7 +186,7 @@ def rreg_create():
 
     resource_description = body['resource_description']
     print("resource_description: ", resource_description)
-    resource_scopes = ""
+    resource_scopes = ""  # 初期化
     for i, e in enumerate(resource_description['resource_scopes']):
         resource_scopes = resource_scopes + e
         if i is not len(resource_description['resource_scopes'])-1:
@@ -193,13 +195,13 @@ def rreg_create():
     icon_uri = resource_description['icon_uri']
     name = resource_description['name']
     _type = resource_description['type']
-    timestamp = "1595230979"
-    timeSig = "vF9Oyfm+G9qS4/Qfns5MgSZNYjOPlAIZVECh2I5Z7HHgdloy5q7gJoxi7c1S2/ebIQbEMLS05x3+b0WD0VJfcWSUwZMHr3jfXYYwbeZ1TerKpvfp1j21nZ+OEP26bc28rLRAYZsVQ4Ilx7qp+uLfxu9X9x37Qj3n0CI2TEiKYSSYDQ0bftQ/3iWSSoGjsDljh9bKz1eVL911KeUGO+t/9IkB6LtZghdbIlnGISbgrVGoEOtGHi0t8uD2Vh/CRyBe+XnQV3HQtkjddLQitAesKTYunK1Ctia3x7klVjRH9XiJ11q6IbR8gz7rchdHYZe6HP+w/LyWMS5z6M26AXQrVw=="
+    timestamp = body['timestamp']
+    timeSig = body['timeSig']
 
     cc_name = "rreg"
     func_name = "invoke"
-    #args = "[\"" + pat + "\", \"" + resource_description.replace("'", '"').replace('"', '\\"') + "\"]"
-    args = [pat, resource_scopes, description, icon_uri, name, _type, timestamp, timeSig]
+    args = [pat, resource_scopes, description,
+            icon_uri, name, _type, timestamp, timeSig]
     #print("args: ", args)
 
     input = make_input(cc_name, func_name, args)
@@ -263,7 +265,7 @@ def policy_post():
     aud = request.form['aud']  # クレームトークンの検証者
     if iss == "" or sub == "" or aud == "":
         return jsonify({'message': "error: iss or sub or aud is not configured"})
-    
+
     cc_name = "policy"
     func_name = "invoke"
     args = [rid, iss, sub, aud]
@@ -277,24 +279,111 @@ def policy_post():
     return jsonify({'message': output})
 
 
-@app.route('/perm')
+@app.route('/perm', methods=['post'])
 def perm():
-    return None
+    # チケットを発行する
+
+    # PAT の呼び出し（方法は未定）
+    # (ro01, rs) - rid = 08db20ba-2666-5b91-9bef-3d5b7d9138ae
+    pat = "0xddb5ab8c5405830359d2af4ec8d4bdf27bc4b8ee7d20f64ec1a71a634e551"
+    # (ro02, rs) - rid = 1c1f1d9f-051c-592f-bb06-5ec8cef664ba
+    #pat = "0x23e6958b1f555b905ade2f915c8c64453bd9514c4e1750d995f17215cbc4"
+
+    # ヘッダのチェック
+    if not request.headers.get('Content-Type') == 'application/json':
+        error_message = {
+            'error': "not supported Content-Type"
+        }
+        return make_response(jsonify(error_message), 400)
+
+    # リクエストボディの読み取り
+    body = request.get_data().decode('utf8').replace("'", '"')
+    body = json.loads(body)
+    rid = body['resource_id']
+    request_scopes = ""
+    for i, e in enumerate(body['request_scopes']):
+        request_scopes = request_scopes + e
+        if i is not len(body['request_scopes'])-1:
+            request_scopes = request_scopes + ", "
+    timestamp = body['timestamp']
+    timeSig = body['timeSig']
+
+    # CC へ入力
+    cc_name = "perm"
+    func_name = "invoke"
+    args = [pat, rid, request_scopes, timestamp, timeSig]
+    input = make_input(cc_name, func_name, args)
+    print("input: ", input)
+    _output = input_command(input)
+    output = interpret_command_output(_output)
+    print("output: ", output)
+    ticket = output
+    res = {
+        'ticket': ticket
+    }
+
+    return make_response(json.dumps({'response': res}), 200)
 
 
-@app.route('/token')
+@app.route('/token', methods=['post'])
 def token():
-    return None
+    # ヘッダのチェック
+    if not request.headers.get('Content-Type') == 'application/json':
+        error_message = {
+            'error': "not supported Content-Type"
+        }
+        return make_response(jsonify(error_message), 400)
+
+    # リクエストボディの読み取り
+    body = request.get_data().decode('utf8').replace("'", '"')
+    body = json.loads(body)
+    grant_type = body['grantType']
+    ticket = body['ticket']
+    # claim_token の有無を処理
+    if body['claimToken'] is None:
+        claim_token = ""
+    if body['claimTokenFormat'] is None:
+        claim_token_format = ""
+
+    timestamp = body['timestamp']
+    timeSig = body['timeSig']
+
+    # CC へ入力
+    cc_name = "token"
+    func_name = "invoke"
+    args = [grant_type, ticket, claim_token,
+            claim_token_format, timestamp, timeSig]
+    input = make_input(cc_name, func_name, args)
+    print("input: ", input)
+    _output = input_command(input)
+    output = interpret_command_output(_output)
+    print("output: ", output)
+
+    # token.go の return の実装がミスっていたのでこちらで処理する
+    output = output.split("\\\\")
+    res = {}
+    for i, e in enumerate(output):
+        if e == 'Error':
+            dict['Error'] = output[i+2]
+        elif e == 'Ticket':
+            dict['Ticket'] = output[i+2]
+        elif e == 'ClaimsRedirectUri':
+            dict['ClaimsRedirectUri'] = output[i+2]  # 本来
+            dict['ClaimsRedirectUri'] = "http://tff-01.ctiport.net:8888/rqp-claims"  # 修正版
+        else:
+            return make_response(jsonify({'error': "invalid chaincode return"}))
+
+    return make_response(json.dumps({'response': res}), 200)
 
 
-@app.route('/claim')
+@app.route('/rqp-claims')
 def claim():
-    return None
+    return make_response(jsonify({'message': "success"}), 200)
 
 
 @app.route('/intro')
 def intro():
-    return None
+    return make_response(jsonify({'message': "success"}), 200)
 
 
 if __name__ == "__main__":
