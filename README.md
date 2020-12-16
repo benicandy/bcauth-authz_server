@@ -117,16 +117,16 @@ export CC_PACKAGE_NAME="rreg";
 export CC_PACKAGE_ID=rreg_1.0:e56d22575b7d41c953a85fc013976b7a182117a0560c4e8bbbf8e538f03e4f07;
 peer lifecycle chaincode approveformyorg -o localhost:7050 --ordererTLSHostnameOverride orderer.example.com --channelID mychannel --name $CC_PACKAGE_NAME --version 1.0 --package-id $CC_PACKAGE_ID --sequence 1 --tls --cafile ${PWD}/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem;
 export CC_PACKAGE_NAME="policy";
-export CC_PACKAGE_ID=policy_1.0:db09535a987de4d2be9ee0e3c2cbfc0b03321f1878358d8a9d94eb808d70bb62;
+export CC_PACKAGE_ID=policy_1.0:8be6bbe519998f5b4e6e64ad8df1c08d5eeead7f6b6cd126c4c011656b6e2384;
 peer lifecycle chaincode approveformyorg -o localhost:7050 --ordererTLSHostnameOverride orderer.example.com --channelID mychannel --name $CC_PACKAGE_NAME --version 1.0 --package-id $CC_PACKAGE_ID --sequence 1 --tls --cafile ${PWD}/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem;
 export CC_PACKAGE_NAME="perm";
-export CC_PACKAGE_ID=perm_1.0:94e53c5e3cb0a6a651cbabb43dce0192b810e4abef1de4b96c2fb4e187a886fa;
+export CC_PACKAGE_ID=perm_1.0:878bb5a2542f28a94293bf9898b8aeba9799379ceb85f7d91d888f822523a569;
 peer lifecycle chaincode approveformyorg -o localhost:7050 --ordererTLSHostnameOverride orderer.example.com --channelID mychannel --name $CC_PACKAGE_NAME --version 1.0 --package-id $CC_PACKAGE_ID --sequence 1 --tls --cafile ${PWD}/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem;
 export CC_PACKAGE_NAME="token";
-export CC_PACKAGE_ID=token_1.0:c8408a71ce359f2c42b6662c331cc5ad5bc9505dc68d3a7603490af59f4df48b;
+export CC_PACKAGE_ID=token_1.0:76f7167616a3752ca3a8dc36754f736d36f4ee84b006f881a551ac4297d42025;
 peer lifecycle chaincode approveformyorg -o localhost:7050 --ordererTLSHostnameOverride orderer.example.com --channelID mychannel --name $CC_PACKAGE_NAME --version 1.0 --package-id $CC_PACKAGE_ID --sequence 1 --tls --cafile ${PWD}/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem;
 export CC_PACKAGE_NAME="claim";
-export CC_PACKAGE_ID=claim_1.0:78e1bf9c635f582d5030ab01d27ebd655e7672d5679f25218f1f28fde93b3ba4;
+export CC_PACKAGE_ID=claim_1.0:e49cbac5b97381c23f8c28ffd558105f2f51cf1346eec54b871d720261c913ac;
 peer lifecycle chaincode approveformyorg -o localhost:7050 --ordererTLSHostnameOverride orderer.example.com --channelID mychannel --name $CC_PACKAGE_NAME --version 1.0 --package-id $CC_PACKAGE_ID --sequence 1 --tls --cafile ${PWD}/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem;
 export CC_PACKAGE_NAME="intro";
 export CC_PACKAGE_ID=intro_1.0:b194a401988b87d7f5dba803021779948b22785d3da3167482e2a5f3b8916ae6;
@@ -149,16 +149,16 @@ export CC_PACKAGE_NAME="rreg";
 export CC_PACKAGE_ID=rreg_1.0:e56d22575b7d41c953a85fc013976b7a182117a0560c4e8bbbf8e538f03e4f07;
 peer lifecycle chaincode approveformyorg -o localhost:7050 --ordererTLSHostnameOverride orderer.example.com --channelID mychannel --name $CC_PACKAGE_NAME --version 1.0 --package-id $CC_PACKAGE_ID --sequence 1 --tls --cafile ${PWD}/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem;
 export CC_PACKAGE_NAME="policy";
-export CC_PACKAGE_ID=policy_1.0:db09535a987de4d2be9ee0e3c2cbfc0b03321f1878358d8a9d94eb808d70bb62;
+export CC_PACKAGE_ID=policy_1.0:8be6bbe519998f5b4e6e64ad8df1c08d5eeead7f6b6cd126c4c011656b6e2384;
 peer lifecycle chaincode approveformyorg -o localhost:7050 --ordererTLSHostnameOverride orderer.example.com --channelID mychannel --name $CC_PACKAGE_NAME --version 1.0 --package-id $CC_PACKAGE_ID --sequence 1 --tls --cafile ${PWD}/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem;
 export CC_PACKAGE_NAME="perm";
-export CC_PACKAGE_ID=perm_1.0:94e53c5e3cb0a6a651cbabb43dce0192b810e4abef1de4b96c2fb4e187a886fa;
+export CC_PACKAGE_ID=perm_1.0:878bb5a2542f28a94293bf9898b8aeba9799379ceb85f7d91d888f822523a569;
 peer lifecycle chaincode approveformyorg -o localhost:7050 --ordererTLSHostnameOverride orderer.example.com --channelID mychannel --name $CC_PACKAGE_NAME --version 1.0 --package-id $CC_PACKAGE_ID --sequence 1 --tls --cafile ${PWD}/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem;
 export CC_PACKAGE_NAME="token";
-export CC_PACKAGE_ID=token_1.0:c8408a71ce359f2c42b6662c331cc5ad5bc9505dc68d3a7603490af59f4df48b;
+export CC_PACKAGE_ID=token_1.0:76f7167616a3752ca3a8dc36754f736d36f4ee84b006f881a551ac4297d42025;
 peer lifecycle chaincode approveformyorg -o localhost:7050 --ordererTLSHostnameOverride orderer.example.com --channelID mychannel --name $CC_PACKAGE_NAME --version 1.0 --package-id $CC_PACKAGE_ID --sequence 1 --tls --cafile ${PWD}/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem;
 export CC_PACKAGE_NAME="claim";
-export CC_PACKAGE_ID=claim_1.0:78e1bf9c635f582d5030ab01d27ebd655e7672d5679f25218f1f28fde93b3ba4;
+export CC_PACKAGE_ID=claim_1.0:e49cbac5b97381c23f8c28ffd558105f2f51cf1346eec54b871d720261c913ac;
 peer lifecycle chaincode approveformyorg -o localhost:7050 --ordererTLSHostnameOverride orderer.example.com --channelID mychannel --name $CC_PACKAGE_NAME --version 1.0 --package-id $CC_PACKAGE_ID --sequence 1 --tls --cafile ${PWD}/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem;
 export CC_PACKAGE_NAME="intro";
 export CC_PACKAGE_ID=intro_1.0:b194a401988b87d7f5dba803021779948b22785d3da3167482e2a5f3b8916ae6;
@@ -216,7 +216,7 @@ sleep 3
 
 # policy - invoke
 export INVOKE_CC_NAME="policy";
-peer chaincode invoke -o localhost:7050 --ordererTLSHostnameOverride orderer.example.com --tls --cafile ${PWD}/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem -C mychannel -n $INVOKE_CC_NAME --peerAddresses localhost:7051 --tlsRootCertFiles ${PWD}/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt --peerAddresses localhost:9051 --tlsRootCertFiles ${PWD}/organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt -c '{"function":"invoke","Args":["a1287e01-ca02-5c27-9388-8fcde33e665d","https://example.com/idp","rqp_id","client_id"]}';
+peer chaincode invoke -o localhost:7050 --ordererTLSHostnameOverride orderer.example.com --tls --cafile ${PWD}/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem -C mychannel -n $INVOKE_CC_NAME --peerAddresses localhost:7051 --tlsRootCertFiles ${PWD}/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt --peerAddresses localhost:9051 --tlsRootCertFiles ${PWD}/organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt -c '{"function":"invoke","Args":["a1287e01-ca02-5c27-9388-8fcde33e665d","http://tff-01.ctiport.net:8888/idp","rqp_id","client_id"]}';
 
 sleep 3
 
@@ -246,7 +246,7 @@ sleep 3
 
 # token (claim_token あり)
 export INVOKE_CC_NAME="token";
-peer chaincode invoke -o localhost:7050 --ordererTLSHostnameOverride orderer.example.com --tls --cafile ${PWD}/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem -C mychannel -n $INVOKE_CC_NAME --peerAddresses localhost:7051 --tlsRootCertFiles ${PWD}/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt --peerAddresses localhost:9051 --tlsRootCertFiles ${PWD}/organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt -c '{"function":"invoke","Args":["urn:ietf:params:oauth:grant-type:uma-ticket","e8f5df35-e36a-5a4a-b8fb-2bc6e6556e22","{\"iss\":https://example.com/idp,\"sub\":rqp_id,\"aud\":client_id}","http://openid.net/specs/openid-connect-core-1_0.html#IDToken","1595230979","vF9Oyfm+G9qS4/Qfns5MgSZNYjOPlAIZVECh2I5Z7HHgdloy5q7gJoxi7c1S2/ebIQbEMLS05x3+b0WD0VJfcWSUwZMHr3jfXYYwbeZ1TerKpvfp1j21nZ+OEP26bc28rLRAYZsVQ4Ilx7qp+uLfxu9X9x37Qj3n0CI2TEiKYSSYDQ0bftQ/3iWSSoGjsDljh9bKz1eVL911KeUGO+t/9IkB6LtZghdbIlnGISbgrVGoEOtGHi0t8uD2Vh/CRyBe+XnQV3HQtkjddLQitAesKTYunK1Ctia3x7klVjRH9XiJ11q6IbR8gz7rchdHYZe6HP+w/LyWMS5z6M26AXQrVw=="]}';
+peer chaincode invoke -o localhost:7050 --ordererTLSHostnameOverride orderer.example.com --tls --cafile ${PWD}/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem -C mychannel -n $INVOKE_CC_NAME --peerAddresses localhost:7051 --tlsRootCertFiles ${PWD}/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt --peerAddresses localhost:9051 --tlsRootCertFiles ${PWD}/organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt -c '{"function":"invoke","Args":["urn:ietf:params:oauth:grant-type:uma-ticket","e8f5df35-e36a-5a4a-b8fb-2bc6e6556e22","{\"iss\":http://tff-01.ctiport.net:8888/idp,\"sub\":rqp_id,\"aud\":client_id}","http://openid.net/specs/openid-connect-core-1_0.html#IDToken","1595230979","vF9Oyfm+G9qS4/Qfns5MgSZNYjOPlAIZVECh2I5Z7HHgdloy5q7gJoxi7c1S2/ebIQbEMLS05x3+b0WD0VJfcWSUwZMHr3jfXYYwbeZ1TerKpvfp1j21nZ+OEP26bc28rLRAYZsVQ4Ilx7qp+uLfxu9X9x37Qj3n0CI2TEiKYSSYDQ0bftQ/3iWSSoGjsDljh9bKz1eVL911KeUGO+t/9IkB6LtZghdbIlnGISbgrVGoEOtGHi0t8uD2Vh/CRyBe+XnQV3HQtkjddLQitAesKTYunK1Ctia3x7klVjRH9XiJ11q6IbR8gz7rchdHYZe6HP+w/LyWMS5z6M26AXQrVw=="]}';
 
 sleep 3
 

@@ -31,7 +31,7 @@ def make_input(cc_name, func_name, args):
 
     ret = cd + export_PATH + export_CFG + export_CORE + 'peer chaincode invoke -o localhost:7050 --ordererTLSHostnameOverride orderer.example.com --tls --cafile {0}/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem -C mychannel -n {1} --peerAddresses localhost:7051 --tlsRootCertFiles {2}/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt --peerAddresses localhost:9051 --tlsRootCertFiles {3}/organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt -c \'{{"function":"{4}","Args":{5}}}\''.format(
         PWD, cc_name, PWD, PWD, func_name, str(args).replace("'", '"'))
-    #ret = cd + export_PATH + export_CFG + "ls $FABRIC_CFG_PATH"
+    # ret = cd + export_PATH + export_CFG + "ls $FABRIC_CFG_PATH"
     return ret
 
 
@@ -70,11 +70,23 @@ def interpret_command_output(_output):
         li = str(_output[0]).split('status:')[-1].split(' ')
         if li[0] == '200':
             output = li[1].replace('payload:', '').replace('\"', '')
+            output_data = {
+                'message': "success",
+                'response': output
+            }
         else:
             output = _output[0].decode('utf8').replace("'", '"')
+            output_data = {
+                'message': "error",
+                'response': output
+            }
         return output
     except:
-        return "Error: exception."
+        output_data = {
+            'message': "error",
+            'response': "Exception."
+        }
+        return
 
 
 @app.route('/')
@@ -113,10 +125,15 @@ def pat_post():
     _output = input_command(input)
     output = interpret_command_output(_output)
     print(output)
-    param = {'uid': uid, 'pat': output}
+    if output['message'] == "error":
+        error_message = {
+            'error': output['response']
+        }
+        return make_response(jsonify(error_message), 400)
+    param = {'uid': uid, 'pat': output['response']}
     qs = urllib.parse.urlencode(param)
 
-    # return make_response(jsonify({"message": qs}))
+    # return make_response(jsonify({"response": qs}))
     return redirect('http://eza1.ctiport.net:8080/reg-resource?' + qs, code=301)
 
 
@@ -146,7 +163,12 @@ def rreg_list():
     input = make_input(pat)
     _output = command(input)
     output = interpret_command_output(_output)
-    res = output
+    if output['message'] == "error":
+        error_message = {
+            'error': output['response']
+        }
+        return make_response(jsonify(error_message), 400)
+    res = output['response']
     return render_template('rreg.html', res=res)
 
 
@@ -202,14 +224,19 @@ def rreg_create():
     func_name = "invoke"
     args = [pat, resource_scopes, description,
             icon_uri, name, _type, timestamp, timeSig]
-    #print("args: ", args)
+    # print("args: ", args)
 
     input = make_input(cc_name, func_name, args)
-    #print("input: ", input)
+    # print("input: ", input)
     _output = input_command(input)
     output = interpret_command_output(_output)
     print("output: ", output)
-    res = {'resource_id': output}
+    if output['message'] == "error":
+        error_message = {
+            'error': output['response']
+        }
+        return make_response(jsonify(error_message), 400)
+    res = {'resource_id': output['response']}
 
     return make_response(json.dumps({'response': res}), 200)
     # return render_template('rreg.html')
@@ -225,7 +252,7 @@ def policy():
         return jsonify({'message': "error: no resource name or resource id"})
 
     html = """
-    <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 
+    <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0
     Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
     <html xmlns="http://www.w3.org/1999/xhtml">
 
@@ -269,14 +296,19 @@ def policy_post():
     cc_name = "policy"
     func_name = "invoke"
     args = [rid, iss, sub, aud]
-    #print("args: ", args)
+    # print("args: ", args)
     input = make_input(cc_name, func_name, args)
-    #print("input: ", input)
+    # print("input: ", input)
     _output = input_command(input)
     output = interpret_command_output(_output)
     print("output: ", output)
+    if output['message'] == "error":
+        error_message = {
+            'error': output['response']
+        }
+        return make_response(jsonify(error_message), 400)
 
-    return jsonify({'message': output})
+    return make_response(jsonify({'message': output['response']}), 200)
 
 
 @app.route('/perm', methods=['post'])
@@ -287,7 +319,7 @@ def perm():
     # (ro01, rs) - rid = 08db20ba-2666-5b91-9bef-3d5b7d9138ae
     pat = "0xddb5ab8c5405830359d2af4ec8d4bdf27bc4b8ee7d20f64ec1a71a634e551"
     # (ro02, rs) - rid = 1c1f1d9f-051c-592f-bb06-5ec8cef664ba
-    #pat = "0x23e6958b1f555b905ade2f915c8c64453bd9514c4e1750d995f17215cbc4"
+    # pat = "0x23e6958b1f555b905ade2f915c8c64453bd9514c4e1750d995f17215cbc4"
 
     # ヘッダのチェック
     if not request.headers.get('Content-Type') == 'application/json':
@@ -317,9 +349,14 @@ def perm():
     _output = input_command(input)
     output = interpret_command_output(_output)
     print("output: ", output)
-    ticket = output
+    if output['message'] == "error":
+        error_message = {
+            'error': output['response']
+        }
+        return make_response(jsonify(error_message), 400)
+
     res = {
-        'ticket': ticket
+        'ticket': output['response']
     }
 
     return make_response(json.dumps({'response': res}), 200)
@@ -327,6 +364,16 @@ def perm():
 
 @app.route('/token', methods=['post'])
 def token():
+    """
+    :req_header Content-Type application/json:
+    :req_param grant_type:
+    :req_param ticket:
+    :req_param claim_token:
+    :req_param claim_token_format:
+    :req_param timestamp:
+    :req_param timeSig:
+    :res_param RPT or Error(need_info):
+    """
     # ヘッダのチェック
     if not request.headers.get('Content-Type') == 'application/json':
         error_message = {
@@ -342,8 +389,13 @@ def token():
     # claim_token の有無を処理
     if body['claimToken'] is None:
         claim_token = ""
+    else:
+        claim_token = body['claimToken']
+
     if body['claimTokenFormat'] is None:
         claim_token_format = ""
+    else:
+        claim_token_format = body['claimTokenFormat']
 
     timestamp = body['timestamp']
     timeSig = body['timeSig']
@@ -358,18 +410,23 @@ def token():
     _output = input_command(input)
     output = interpret_command_output(_output)
     print("output: ", output)
+    if output['message'] == "error":
+        error_message = {
+            'error': output['response']
+        }
+        return make_response(jsonify(error_message), 400)
 
     # token.go の return の実装がミスっていたのでこちらで処理する
-    output = output.split("\\\\")
+    output = output['response'].split("\\\\")
+    print(output)
     res = {}
     for i, e in enumerate(output):
         if e == 'Error':
-            dict['Error'] = output[i+2]
+            res['Error'] = output[i+2]
         elif e == 'Ticket':
-            dict['Ticket'] = output[i+2]
-        elif e == 'ClaimsRedirectUri':
-            dict['ClaimsRedirectUri'] = output[i+2]  # 本来
-            dict['ClaimsRedirectUri'] = "http://tff-01.ctiport.net:8888/rqp-claims"  # 修正版
+            res['Ticket'] = output[i+2]
+        elif e == 'RedirectUser':
+            res['RedirectUser'] = output[i+2]
         else:
             return make_response(jsonify({'error': "invalid chaincode return"}))
 
@@ -378,12 +435,157 @@ def token():
 
 @app.route('/rqp-claims')
 def claim():
-    return make_response(jsonify({'message': "success"}), 200)
+    req_client_id = request.args.get('client_id')
+    ticket = request.args.get('ticket')
+    claims_redirect_uri = request.args.get('claims_redirect_uri')
+    timestamp = request.args.get('timestamp')
+    timeSig = request.args.get('timeSig')
+
+    # CC へ入力
+    cc_name = "claim"
+    func_name = "invoke"
+    args = [req_client_id, ticket, claims_redirect_uri, timestamp, timeSig]
+    input = make_input(cc_name, func_name, args)
+    print("input: ", input)
+    _output = input_command(input)
+    output = interpret_command_output(_output)
+    print("output: ", output)
+    if output['message'] == "error":
+        error_message = {
+            'error': output['response']
+        }
+        return make_response(jsonify(error_message), 400)
+    res = output['response']  # ticket
+
+    # /rqp-authen へリダイレクト
+    param = {
+        'ticket': res,
+        'claims_redirect_uri': claims_redirect_uri,
+        'client_id': rqp_client_id,
+        'timestamp': timestamp,
+        'timeSig': timeSig
+    }
+    qs = urllib.parse.urlencode(param)
+
+    return redirect(ufl_for('rqp-authen') + '?' + qs, 301)
 
 
-@app.route('/intro')
+@app.route('/rqp-authen')
+def rqp_authen():
+    """
+    :req_param ticket: パーミッションチケット
+    """
+    # パラメータを受け取る
+    ticket = request.args.get('ticket')
+    claims_redirect_uri = request.args.get('claims_redirect_uri')
+    client_id = request.args.get('client_id')
+    timestamp = request.args.get('timestamp')
+    timeSig = request.args.get('timeSig')
+
+    # ticket を検証し，正しければ処理を継続(invokeAuthen() - claim.go)
+    cc_name = "claim"
+    func_name = "invokeAuthen"
+    args = [ticket, timestamp, timeSig]
+    input = make_input(cc_name, func_name, args)
+    print("input: ", input)
+    _output = input_command(input)
+    output = interpret_command_output(_output)
+    print("output: ", output)
+    if output['message'] == "error":
+        error_message = {
+            'error': output['response']
+        }
+        return make_response(jsonify(error_message), 400)
+
+    res = output['response']  # ticket
+
+    # 認証処理用のフォームを返す
+    html = """
+    <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0
+    Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+    <html xmlns="http://www.w3.org/1999/xhtml">
+
+    <head>
+        <title></title>
+    </head>
+
+    <body>
+        <h1>Authorization Blockchain API</h1>
+        <h2>認証フォーム</h2>
+        <p>認証処理を実施します．</p>
+        <br>
+        <form action="/rqp-authen" method="post">
+            <p>ユーザ ID:   <input type="text" name="uid"></p>
+            <p>パスワード:  <input type="password" name="sub"></p>
+            <input type="hidden" name="ticket" value={0}>
+            <input type="hidden" name="client_id" value={1}>
+            <input type="hidden" name="claims_redirect_uri" value={2}>
+            <button type="submit" value="authen">submit</button>
+        </form>
+    </body>
+
+    </html>
+    """.format(ticket, client_id, claims_redirect_uri)
+
+    template = Template(html)
+
+    return template.render()
+
+
+@app.route('/rqp-authen', methods=['post'])
+def rqp_authen_post():
+    """
+    :req_param uid: ユーザ ID
+    :req_param password: パスワード
+    :req_param ticket: パーミッションチケット
+    :req_param client_id: クライアント ID
+    """
+    # パラメータを受け取る
+    uid = request.form['uid']
+    password = request.form['password']
+    ticket = request.form['ticket']
+    client_id = request.form['client_id']
+    claims_redirect_uri = request.form['claims_redirect_uri']
+
+    # 認証情報を検証
+    dir = './authenDB/'
+    file = 'user.txt'
+    path = dir + file
+    with open(path, encoding='utf-8') as f:
+        li = f.readlines()
+    dict = {}  # { uid : password }
+    for i in range(len(li)):
+        dict[li.strip().split(':')[0]] = li.strip().split(':')[1]
+    try:
+        _password = dict[uid]
+        if password != _password:
+            return make_response(jsonify({'error': "user id or password is invalid."}), 400)
+    except:
+        return make_response(jsonify({'error': "user id may not exists."}), 400)
+
+    # claim_token を生成する
+    claim_token = {
+        'iss': "http://tff-01.ctiport.net:8888/rqp-authen",
+        'sub': uid,
+        'aud': client_id
+    }
+
+    token_endpoint = 'http://tff-01.ctiport.net:8888/token'
+
+    # ticket と claim_token を返す
+    param = {
+        'ticket': ticket,
+        'claim_token': json.dupms(claim_token).encode('utf8'),
+        'token_endpoint': token_endpoint
+    }
+    qs = urllib.parse.urlencode(param)
+
+    return redirect(claims_redirect_uri + '?' + qs, 301)
+
+
+@ app.route('/intro')
 def intro():
-    return make_response(jsonify({'message': "success"}), 200)
+    return make_response(jsonify({'response': "success"}), 200)
 
 
 if __name__ == "__main__":
