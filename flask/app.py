@@ -6,6 +6,7 @@ import json
 import werkzeug
 from datetime import datetime
 import subprocess
+import time
 
 import urllib
 
@@ -30,7 +31,7 @@ def make_input(cc_name, func_name, args):
         PWD, PWD)
 
     ret = cd + export_PATH + export_CFG + export_CORE + 'peer chaincode invoke -o localhost:7050 --ordererTLSHostnameOverride orderer.example.com --tls --cafile {0}/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem -C mychannel -n {1} --peerAddresses localhost:7051 --tlsRootCertFiles {2}/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt --peerAddresses localhost:9051 --tlsRootCertFiles {3}/organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt -c \'{{"function":"{4}","Args":{5}}}\''.format(
-        PWD, cc_name, PWD, PWD, func_name, str(args).replace("'", '"'))
+        PWD, cc_name, PWD, PWD, func_name, str(args).replace("\\\\", "\\").replace("'", '"'))
     # ret = cd + export_PATH + export_CFG + "ls $FABRIC_CFG_PATH"
     return ret
 
@@ -59,6 +60,7 @@ def input_command(cmd):
     _output = []  # 標準出力を格納
     for line in terminal_interface(cmd):
         _output.append(line)
+    time.sleep(3)  # コマンドの連続実行を阻止
     return _output
 
 
@@ -80,13 +82,13 @@ def interpret_command_output(_output):
                 'message': "error",
                 'response': output
             }
-        return output
+        return output_data
     except:
         output_data = {
             'message': "error",
             'response': "Exception."
         }
-        return
+        return output_data
 
 
 @app.route('/')
@@ -319,7 +321,7 @@ def perm():
     # (ro01, rs) - rid = 08db20ba-2666-5b91-9bef-3d5b7d9138ae
     pat = "0xddb5ab8c5405830359d2af4ec8d4bdf27bc4b8ee7d20f64ec1a71a634e551"
     # (ro02, rs) - rid = 1c1f1d9f-051c-592f-bb06-5ec8cef664ba
-    # pat = "0x23e6958b1f555b905ade2f915c8c64453bd9514c4e1750d995f17215cbc4"
+    #pat = "0x23e6958b1f555b905ade2f915c8c64453bd9514c4e1750d995f17215cbc4"
 
     # ヘッダのチェック
     if not request.headers.get('Content-Type') == 'application/json':
@@ -384,18 +386,18 @@ def token():
     # リクエストボディの読み取り
     body = request.get_data().decode('utf8').replace("'", '"')
     body = json.loads(body)
-    grant_type = body['grantType']
+    grant_type = body['grant_type']
     ticket = body['ticket']
     # claim_token の有無を処理
-    if body['claimToken'] is None:
+    if 'claim_token' not in body:
         claim_token = ""
     else:
-        claim_token = body['claimToken']
+        claim_token = body['claim_token']
 
-    if body['claimTokenFormat'] is None:
+    if 'claim_token_format' not in body:
         claim_token_format = ""
     else:
-        claim_token_format = body['claimTokenFormat']
+        claim_token_format = body['claim_token_format']
 
     timestamp = body['timestamp']
     timeSig = body['timeSig']
@@ -420,15 +422,21 @@ def token():
     output = output['response'].split("\\\\")
     print(output)
     res = {}
-    for i, e in enumerate(output):
-        if e == 'Error':
-            res['Error'] = output[i+2]
-        elif e == 'Ticket':
-            res['Ticket'] = output[i+2]
-        elif e == 'RedirectUser':
-            res['RedirectUser'] = output[i+2]
-        else:
-            return make_response(jsonify({'error': "invalid chaincode return"}))
+    if len(output) == 1:
+        res['token'] = output[0]
+    elif output[1] == 'Error':
+        for i, e in enumerate(output):
+            if e == 'Error':
+                res['Error'] = output[i+2]
+            elif e == 'Ticket':
+                res['Ticket'] = output[i+2]
+            elif e == 'RedirectUser':
+                res['RedirectUser'] = output[i+2]
+            else:
+                pass
+    else:
+        make_response(json.dumps({'response': "Error."}))
+        
 
     return make_response(json.dumps({'response': res}), 200)
 
@@ -446,7 +454,7 @@ def claim():
     func_name = "invoke"
     args = [req_client_id, ticket, claims_redirect_uri, timestamp, timeSig]
     input = make_input(cc_name, func_name, args)
-    print("input: ", input)
+    #print("input: ", input)
     _output = input_command(input)
     output = interpret_command_output(_output)
     print("output: ", output)
@@ -461,17 +469,17 @@ def claim():
     param = {
         'ticket': res,
         'claims_redirect_uri': claims_redirect_uri,
-        'client_id': rqp_client_id,
+        'client_id': req_client_id,
         'timestamp': timestamp,
         'timeSig': timeSig
     }
     qs = urllib.parse.urlencode(param)
 
-    return redirect(ufl_for('rqp-authen') + '?' + qs, 301)
+    return redirect(url_for('authen') + '?' + qs, code=301)
 
 
-@app.route('/rqp-authen')
-def rqp_authen():
+@app.route('/authen')
+def authen():
     """
     :req_param ticket: パーミッションチケット
     """
@@ -487,7 +495,7 @@ def rqp_authen():
     func_name = "invokeAuthen"
     args = [ticket, timestamp, timeSig]
     input = make_input(cc_name, func_name, args)
-    print("input: ", input)
+    #print("input: ", input)
     _output = input_command(input)
     output = interpret_command_output(_output)
     print("output: ", output)
@@ -514,9 +522,9 @@ def rqp_authen():
         <h2>認証フォーム</h2>
         <p>認証処理を実施します．</p>
         <br>
-        <form action="/rqp-authen" method="post">
+        <form action="/authen" method="post">
             <p>ユーザ ID:   <input type="text" name="uid"></p>
-            <p>パスワード:  <input type="password" name="sub"></p>
+            <p>パスワード:  <input type="password" name="password"></p>
             <input type="hidden" name="ticket" value={0}>
             <input type="hidden" name="client_id" value={1}>
             <input type="hidden" name="claims_redirect_uri" value={2}>
@@ -525,15 +533,15 @@ def rqp_authen():
     </body>
 
     </html>
-    """.format(ticket, client_id, claims_redirect_uri)
+    """.format(res, client_id, claims_redirect_uri)
 
     template = Template(html)
 
     return template.render()
 
 
-@app.route('/rqp-authen', methods=['post'])
-def rqp_authen_post():
+@app.route('/authen', methods=['post'])
+def authen_post():
     """
     :req_param uid: ユーザ ID
     :req_param password: パスワード
@@ -553,9 +561,10 @@ def rqp_authen_post():
     path = dir + file
     with open(path, encoding='utf-8') as f:
         li = f.readlines()
+    print("li: ", li)
     dict = {}  # { uid : password }
     for i in range(len(li)):
-        dict[li.strip().split(':')[0]] = li.strip().split(':')[1]
+        dict[li[i].strip().split(':')[0]] = li[i].strip().split(':')[1]
     try:
         _password = dict[uid]
         if password != _password:
@@ -565,17 +574,19 @@ def rqp_authen_post():
 
     # claim_token を生成する
     claim_token = {
-        'iss': "http://tff-01.ctiport.net:8888/rqp-authen",
+        'iss': "http://tff-01.ctiport.net:8888/authen",
         'sub': uid,
         'aud': client_id
     }
 
     token_endpoint = 'http://tff-01.ctiport.net:8888/token'
 
+    claim_token_str = json.dumps(claim_token).replace(" ", "").replace('"', '')
+
     # ticket と claim_token を返す
     param = {
         'ticket': ticket,
-        'claim_token': json.dupms(claim_token).encode('utf8'),
+        'claim_token': claim_token_str,
         'token_endpoint': token_endpoint
     }
     qs = urllib.parse.urlencode(param)
@@ -583,9 +594,49 @@ def rqp_authen_post():
     return redirect(claims_redirect_uri + '?' + qs, 301)
 
 
-@ app.route('/intro')
+@ app.route('/intro', methods=['post'])
 def intro():
-    return make_response(jsonify({'response': "success"}), 200)
+    # ヘッダのチェック
+    if not request.headers.get('Content-Type') == 'application/json':
+        error_message = {
+            'error': "not supported Content-Type"
+        }
+        return make_response(jsonify(error_message), 400)
+
+    # リクエストボディの読み取り
+    body = request.get_data().decode('utf8').replace("'", '"')
+    body = json.loads(body)
+    rpt = body['access_token']
+
+    # PAT の呼び出し（方法は未定）
+    # (ro01, rs) - rid = 08db20ba-2666-5b91-9bef-3d5b7d9138ae
+    pat = "0xddb5ab8c5405830359d2af4ec8d4bdf27bc4b8ee7d20f64ec1a71a634e551"
+
+    # rpt を検証する
+    cc_name = "intro"
+    func_name = "invoke"
+    args = [pat, rpt]
+    input = make_input(cc_name, func_name, args)
+    #print("input: ", input)
+    _output = input_command(input)
+    output = interpret_command_output(_output)
+    if output['message'] == "error":
+        error_message = {
+            'error': output['response']
+        }
+        return make_response(jsonify(error_message), 400)
+
+    # return の実装ミスを処理
+    res = output['response'].replace("\\", "").replace("{", "{\"").replace("}", "\"}")
+    res = res.replace(":", "\":\"").replace(",", "\",\"").replace("\"[", "[").replace("]\"", "]").replace("read", '"read"')
+    print("res: ", res)
+    print("type: ", type(res))
+    res = json.loads(res)
+    print("res: ", res)
+    print("type: ", type(res))
+
+
+    return make_response(json.dumps({'response': res}), 200)
 
 
 if __name__ == "__main__":
