@@ -628,13 +628,10 @@ def intro():
 
     # return の実装ミスを処理
     res = output['response'].replace("\\", "").replace("{", "{\"").replace("}", "\"}")
-    res = res.replace(":", "\":\"").replace(",", "\",\"").replace("\"[", "[").replace("]\"", "]").replace("read", '"read"')
-    print("res: ", res)
-    print("type: ", type(res))
+    res = res.replace(":", "\":\"").replace(",", "\",\"").replace("\"[", "[").replace("]\"", "]")
+    # ResourceScopes キーのリストのみ中身を文字列化する
+    res = res.replace('"ResourceScopes":[', '"ResourceScopes":["').replace('],"Expire"', '"],"Expire"')
     res = json.loads(res)
-    print("res: ", res)
-    print("type: ", type(res))
-
 
     return make_response(json.dumps({'response': res}), 200)
 
