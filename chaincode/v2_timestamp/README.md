@@ -1,0 +1,1 @@
+fabric_samples/chaincode 内にコピーして使用する
