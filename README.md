@@ -300,3 +300,8 @@ export CORE_PEER_ADDRESS=localhost:7051;
 cd ~/project-bcauth/fabric-samples/test-network;
 peer lifecycle chaincode install $INSTALL_CC_NAME.tar.gz;
 
+
+
+# rreg - update
+export INVOKE_CC_NAME="rreg";
+peer chaincode invoke -o localhost:7050 --ordererTLSHostnameOverride orderer.example.com --tls --cafile ${PWD}/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem -C mychannel -n $INVOKE_CC_NAME --peerAddresses localhost:7051 --tlsRootCertFiles ${PWD}/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt --peerAddresses localhost:9051 --tlsRootCertFiles ${PWD}/organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt -c '{"function":"update","Args":["0xddb5ab8c5405830359d2af4ec8d4bdf27bc4b8ee7d20f64ec1a71a634e551","08db20ba-2666-5b91-9bef-3d5b7d9138ae","tff","sample_dataset","","20201220_171418_example.txt",""]}';

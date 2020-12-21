@@ -67,7 +67,7 @@ def input_command(cmd):
 def interpret_command_output(_output):
     # BCから受け取った出力を解釈する関数
     try:
-        # ...status:200 payload:"any_response" \n']
+        # ... status:200 payload:"any_response" \n']
         # -> [200, payload:"any_response", \n']
         li = str(_output[0]).split('status:')[-1].split(' ')
         if li[0] == '200':
@@ -244,6 +244,82 @@ def rreg_create():
     # return render_template('rreg.html')
 
 
+@app.route('/rreg-call', methods=['post'])
+def rreg_call():
+    # resource_id から resource_description を呼び出す
+    """
+    :header Content-Type 'application/json':
+    :header Authorization Bearer: PAT
+    :req_param resourceDescription: リソースの情報
+    # 内訳: resourceScopes[], description, iconUri, name, type
+    :res_param resourceId: リソース固有のID
+    """
+    # header をチェック
+    if not request.headers.get('Content-Type') == 'application/json':
+        error_message = {
+            'error': 'not supported Content-Type'
+        }
+        return make_response(jsonify(error_message), 400)
+    try:
+        header_authz = request.headers.get('Authorization')
+        bearer = header_authz.split('Bearer ')[-1]
+    except:
+        error_message = {
+            'error': 'bearer token is needed'
+        }
+        return make_response(jsonify(error_message), 400)
+
+    pat = bearer
+
+    # body を読み取る
+    body = request.get_data()
+    # バイト列を文字列に変換
+    body = body.decode('utf8').replace("'", '"')
+    # 文字列をJSONに変換
+    body = json.loads(body)
+    # resource_id 呼び出し
+    resource_id = body['resource_id']
+
+    # CC に入力
+    cc_name = "rreg"
+    func_name = "query"
+    args = [pat, resource_id]
+    # print("args: ", args)
+
+    input = make_input(cc_name, func_name, args)
+    # print("input: ", input)
+    _output = input_command(input)
+    output = interpret_command_output(_output)
+    # rreg.go - query() の return の実装がミスっていたのでこちらで処理する
+    response = output['response'].split("\\\\")
+    res = {}
+    if response[1] == 'ResourceScopes':
+        for i, e in enumerate(response):
+            if e == 'ResourceScopes':
+                res['resource_scopes'] = response[i+2]
+            elif e == 'Description':
+                res['description'] = response[i+2]
+            elif e == 'IconUri':
+                res['icon_uri'] = response[i+2]
+            elif e == 'Name':
+                res['name'] = response[i+2]
+            elif e == 'Type':
+                res['type'] = response[i+2]
+            else:
+                pass
+    else:
+        make_response(json.dumps({'response': "Error."}))
+    print("response: ", response)
+    if output['message'] == "error":
+        error_message = {
+            'error': output['response']
+        }
+        return make_response(jsonify(error_message), 400)
+
+    res = {'name': res['name']}
+    return make_response(json.dumps({'response': res}), 200)
+
+
 @app.route('/policy')
 def policy():
     # リソース ID に紐づくポリシーの設定画面を表示する
@@ -338,14 +414,15 @@ def perm():
     for i, e in enumerate(body['request_scopes']):
         request_scopes = request_scopes + e
         if i is not len(body['request_scopes'])-1:
-            request_scopes = request_scopes + ", "
+            request_scopes = request_scopes + ":"
+    dict = "{{" + rid + ",\\\"" + request_scopes + "\\\"" + "}}"
     timestamp = body['timestamp']
     timeSig = body['timeSig']
 
     # CC へ入力
     cc_name = "perm"
     func_name = "invoke"
-    args = [pat, rid, request_scopes, timestamp, timeSig]
+    args = [pat, dict, timestamp, timeSig]
     input = make_input(cc_name, func_name, args)
     print("input: ", input)
     _output = input_command(input)
