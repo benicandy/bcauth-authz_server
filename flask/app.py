@@ -243,6 +243,15 @@ def rreg_create():
     return make_response(json.dumps({'response': res}), 200)
     # return render_template('rreg.html')
 
+"""
+@app.route('/rreg-list', methods=['post'])
+def rreg_list():
+    # pat から resource_id のリストを呼び出す
+    
+    :req_param PAT:
+    
+"""
+
 
 @app.route('/rreg-call', methods=['post'])
 def rreg_call():
@@ -250,9 +259,9 @@ def rreg_call():
     """
     :header Content-Type 'application/json':
     :header Authorization Bearer: PAT
-    :req_param resourceDescription: リソースの情報
+    :req_param resourceId: リソース固有のID
+    :res_param resourceDescription: リソースの情報
     # 内訳: resourceScopes[], description, iconUri, name, type
-    :res_param resourceId: リソース固有のID
     """
     # header をチェック
     if not request.headers.get('Content-Type') == 'application/json':
@@ -290,7 +299,7 @@ def rreg_call():
     # print("input: ", input)
     _output = input_command(input)
     output = interpret_command_output(_output)
-    # rreg.go - query() の return の実装がミスっていたのでこちらで処理する
+    # rreg.go - query() の return の実装がミスっていた？のでこちらで処理する
     response = output['response'].split("\\\\")
     res = {}
     if response[1] == 'ResourceScopes':
@@ -350,6 +359,14 @@ def policy():
             <input type="hidden" name="rid" value={1}>
             <button type="submit" value="set-policy">set policy</button>
         </form>
+        <br>
+        <br>
+        （手続き内容06）<br>
+        リソース所有者は認可ポリシーを設定する．<br>
+        このページでは，「クレームが発行されるエンドポイント」「クレームが示すエンティティ識別子」「Subjectの代理としてリソースへのアクセスを実行するクライアント識別子」の三要素をポリシーとして設定できる．<br>
+        </p>
+
+        <p><img src="/static/images/rreg06.png" width="841" height="500"></p>
     </body>
 
     </html>
@@ -386,7 +403,7 @@ def policy_post():
         }
         return make_response(jsonify(error_message), 400)
 
-    return make_response(jsonify({'message': output['response']}), 200)
+    return render_template('policy.html', iss=iss, sub=sub, aud=aud)
 
 
 @app.route('/perm', methods=['post'])
@@ -542,7 +559,7 @@ def claim():
         return make_response(jsonify(error_message), 400)
     res = output['response']  # ticket
 
-    # /rqp-authen へリダイレクト
+    # /authen へリダイレクト
     param = {
         'ticket': res,
         'claims_redirect_uri': claims_redirect_uri,
@@ -607,6 +624,15 @@ def authen():
             <input type="hidden" name="claims_redirect_uri" value={2}>
             <button type="submit" value="authen">submit</button>
         </form>
+        <br>
+        <br>
+        （手続き内容10）<br>
+        認可ブロックチェーンはRqP及びクライアントがリソースに紐付けられる認可ポリシーを満たすか検証するために，RqPに対し認証情報を要求する．<br>
+        RqPは認可ブロックチェーンに対し，自身の認証情報を送信する．<br>
+        認可ブロックチェーンによる認証情報の検証が正常に終了すると，RqP及びクライアントの認証情報を格納したクレームトークンが発行される．<br>
+        </p>
+
+        <p><img src="/static/images/authz03.png" width="841" height="500"></p>
     </body>
 
     </html>
@@ -671,7 +697,7 @@ def authen_post():
     return redirect(claims_redirect_uri + '?' + qs, 301)
 
 
-@ app.route('/intro', methods=['post'])
+@app.route('/intro', methods=['post'])
 def intro():
     # ヘッダのチェック
     if not request.headers.get('Content-Type') == 'application/json':
@@ -711,6 +737,7 @@ def intro():
     res = json.loads(res)
 
     return make_response(json.dumps({'response': res}), 200)
+
 
 
 if __name__ == "__main__":
