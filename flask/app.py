@@ -15,6 +15,15 @@ app = Flask(__name__)
 # Authorization Blockchain API
 
 
+# stylesheet更新用の関数（システムとは無関係）
+@app.context_processor
+def add_staticfile():
+    def staticfile_cp(fname):
+        path = os.path.join(app.root_path, 'static/css', fname)
+        mtime =  str(int(os.stat(path).st_mtime))
+        return '/static/css/' + fname + '?v=' + str(mtime)
+    return dict(staticfile=staticfile_cp)
+
 def make_input(cc_name, func_name, args):
     # BCに投げる用の入力を生成する関数
     """
@@ -344,13 +353,18 @@ def policy():
     <html xmlns="http://www.w3.org/1999/xhtml">
 
     <head>
-        <title></title>
+        <meta charset="UTF-8">
+        <link rel="stylesheet" type="text/css"
+            href="/static/css/style.css">
+        <link rel="stylesheet" type="text/css"
+            href="/static/css/procedure.css">
+        <title>Authorization Blockchain</title>
     </head>
 
     <body>
-        <h1>Authorization Blockchain API</h1>
-        <h2>ポリシー設定エンドポイント</h2>
-        <p>Resource: {0} に紐づくポリシーを設定します．</p>
+        <h1>Authorization Blockchain Interface</h1>
+        <h2>Policy Setting Endpoint</h2>
+        <p>Set the policy associated with the resource - <b>{0}</b></p>
         <br>
         <form action="/policy" method="post">
             <p>Issuer:   <input type="text" name="iss"></p>
@@ -361,12 +375,14 @@ def policy():
         </form>
         <br>
         <br>
-        （手続き内容06）<br>
-        リソース所有者は認可ポリシーを設定する．<br>
-        このページでは，「クレームが発行されるエンドポイント」「クレームが示すエンティティ識別子」「Subjectの代理としてリソースへのアクセスを実行するクライアント識別子」の三要素をポリシーとして設定できる．<br>
+        <blockquote>
+        <u>Procedure 06</u><br>
+        The resource owner sets the authorization policy. (5)<br>
+        On this page, three elements can be set as a policy: "the endpoint where the claim is issued," "the entity identifier indicated by the claim," and "the client identifier that executes access to the resource on behalf of the subject."<br>
         </p>
+        </blockquote>
 
-        <p><img src="/static/images/rreg06.png" width="841" height="500"></p>
+        <p><img src="/static/images/rreg06.png" width="673" height="400"></p>
     </body>
 
     </html>
@@ -403,7 +419,7 @@ def policy_post():
         }
         return make_response(jsonify(error_message), 400)
 
-    return render_template('policy.html', iss=iss, sub=sub, aud=aud)
+    return render_template('policy.html', rid=rid, iss=iss, sub=sub, aud=aud)
 
 
 @app.route('/perm', methods=['post'])
@@ -415,6 +431,8 @@ def perm():
     pat = "0xddb5ab8c5405830359d2af4ec8d4bdf27bc4b8ee7d20f64ec1a71a634e551"
     # (ro02, rs) - rid = 1c1f1d9f-051c-592f-bb06-5ec8cef664ba
     #pat = "0x23e6958b1f555b905ade2f915c8c64453bd9514c4e1750d995f17215cbc4"
+    # (ro03, rs) - rid = 7b7f4414-a949-5e48-a669-2f203efe6e3f
+    # pat = "0xd0c4ed6f8adf3d7453dc2ece8d66ace20f37550373e653a4802425672ce"
 
     # ヘッダのチェック
     if not request.headers.get('Content-Type') == 'application/json':
@@ -608,31 +626,39 @@ def authen():
     <html xmlns="http://www.w3.org/1999/xhtml">
 
     <head>
-        <title></title>
+        <meta charset="UTF-8">
+        <link rel="stylesheet" type="text/css"
+            href="/static/css/style.css">
+        <link rel="stylesheet" type="text/css"
+            href="/static/css/procedure.css">
+        <title>Authorization Blockchain</title>
     </head>
 
+
     <body>
-        <h1>Authorization Blockchain API</h1>
-        <h2>認証フォーム</h2>
-        <p>認証処理を実施します．</p>
+        <h1>Authorization Blockchain Interface</h1>
+        <h2>Authentication Form</h2>
+        <p>Perform the authentication process.</p>
         <br>
         <form action="/authen" method="post">
-            <p>ユーザ ID:   <input type="text" name="uid"></p>
-            <p>パスワード:  <input type="password" name="password"></p>
+            <p>FL-Client User ID:   <input type="text" name="uid"></p>
+            <p>Password:  <input type="password" name="password"></p>
             <input type="hidden" name="ticket" value={0}>
             <input type="hidden" name="client_id" value={1}>
             <input type="hidden" name="claims_redirect_uri" value={2}>
-            <button type="submit" value="authen">submit</button>
+            <button type="submit" value="authen">Submit</button>
         </form>
         <br>
         <br>
-        （手続き内容10）<br>
-        認可ブロックチェーンはRqP及びクライアントがリソースに紐付けられる認可ポリシーを満たすか検証するために，RqPに対し認証情報を要求する．<br>
-        RqPは認可ブロックチェーンに対し，自身の認証情報を送信する．<br>
-        認可ブロックチェーンによる認証情報の検証が正常に終了すると，RqP及びクライアントの認証情報を格納したクレームトークンが発行される．<br>
+        <blockquote>
+        <u>Procedure 10</u><br>
+        The authorization blockchain requests authentication information from requesting party (RqP) in order to verify that the RqP and client satisfy the authorization policy associated with the resource. (9)<br>
+        The RqP sends its own authentication information to the authorization blockchain. (10)<br>
+        After the verification of the authentication information by the authorization blockchain is successfully completed, a claim token containing the authentication information of the RqP and the client is issued. (11)<br>
         </p>
+        </blockquote>
 
-        <p><img src="/static/images/authz03.png" width="841" height="500"></p>
+        <p><img src="/static/images/authz03.png" width="673" height="400"></p>
     </body>
 
     </html>
@@ -688,6 +714,7 @@ def authen_post():
 
     # ticket と claim_token を返す
     param = {
+        'uid': uid,
         'ticket': ticket,
         'claim_token': claim_token_str,
         'token_endpoint': token_endpoint
@@ -714,6 +741,10 @@ def intro():
     # PAT の呼び出し（方法は未定）
     # (ro01, rs) - rid = 08db20ba-2666-5b91-9bef-3d5b7d9138ae
     pat = "0xddb5ab8c5405830359d2af4ec8d4bdf27bc4b8ee7d20f64ec1a71a634e551"
+    # (ro02, rs) - rid = 1c1f1d9f-051c-592f-bb06-5ec8cef664ba
+    #pat = "0x23e6958b1f555b905ade2f915c8c64453bd9514c4e1750d995f17215cbc4"
+    # (ro03, rs) - rid = 7b7f4414-a949-5e48-a669-2f203efe6e3f
+    # pat = "0xd0c4ed6f8adf3d7453dc2ece8d66ace20f37550373e653a4802425672ce"
 
     # rpt を検証する
     cc_name = "intro"
